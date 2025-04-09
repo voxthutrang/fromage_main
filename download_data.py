@@ -93,27 +93,39 @@ def download_image(row):
    
     if response.ok:
         try:
-            # content_type = response.headers.get("Content-Type", "")
-            # ext = {
-            #     "image/jpeg": ".jpg",
-            #     "image/png": ".png",
-            #     "image/gif": ".gif",
-            #     "image/webp": ".webp"
-            # }.get(content_type.split(";")[0].strip(), "")
+            content_type = response.headers.get("Content-Type", "")
+            content_type_clean = content_type.split(";")[0].strip()
+            
+            # just keep jpeg
+            if content_type_clean != "image/jpeg":
+                row['status'] = 415  # Unsupported media type
+                row['file'] = np.nan
+                row['mimetype'] = np.nan
+                row['size'] = np.nan
+                return row
 
-            # fname = fname + ext
+            fname = fname + ".jpg"
 
             with open(fname, 'wb') as out_file:
-                # some sites respond with gzip transport encoding
                 response.raw.decode_content = True
                 out_file.write(response.content)
+
             row['mimetype'] = magic.from_file(fname, mime=True)
             row['size'] = os.stat(fname).st_size
-        except:
-            # This is if it times out during a download or decode
+            row['file'] = fname
+
+        except Exception as e:
             row['status'] = 408
+            row['file'] = np.nan
+            row['mimetype'] = np.nan
+            row['size'] = np.nan
             return row
-        row['file'] = fname
+
+    else:
+        row['file'] = np.nan
+        row['mimetype'] = np.nan
+        row['size'] = np.nan
+
     return row
 
 # def open_tsv(fname, folder):
