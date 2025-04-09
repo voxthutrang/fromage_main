@@ -7,6 +7,9 @@ import shelve
 import magic #pip install python-magic
 from multiprocessing import Pool
 from tqdm import tqdm
+from PIL import Image
+import os
+import glob
 
 headers = {
     #'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36',
@@ -101,6 +104,11 @@ def download_image(row):
                 "image/webp": ".webp"
             }.get(content_type.split(";")[0].strip(), "")
 
+
+            if ext != ".jpg":
+                row['file'] = np.nan
+                return row
+
             fname = fname + ext
 
             with open(fname, 'wb') as out_file:
@@ -126,7 +134,11 @@ def download_image(row):
 def open_tsv(fname, folder, nrows=20):
     print(f"Opening {fname} Data File (only first {nrows} rows)...")
     os.makedirs(folder, exist_ok=True)
-    df = pd.read_csv(fname, sep='\t', names=["caption", "url"], usecols=range(1,2), nrows=nrows)
+    if nrows != 0:
+        df = pd.read_csv(fname, sep='\t', names=["caption", "url"], usecols=range(1,2), nrows=nrows)
+    else:
+        df = pd.read_csv(fname, sep='\t', names=["caption","url"], usecols=range(1,2))
+
     df['folder'] = folder
     print(f"Processing {len(df)} Images from {fname}:")
     return df
@@ -138,8 +150,16 @@ def df_from_shelve(chunk_size, func, dataset_name):
         df = pd.concat([results[str(k)][1] for k in keylist], sort=True)
     return df
 
-if __name__ == "__main__":
+def resize_image(image_path, size=(256, 256)):
+    try:
+        with Image.open(image_path) as img:
+            img = img.convert("RGB") 
+            img = img.resize(size, Image.Resampling.LANCZOS)
+            img.save(image_path, format="JPEG")
+    except Exception as e:
+        print(f"Error resizing {image_path}: {e}")
 
+if __name__ == "__main__":
     # number of processes in the pool can be larger than cores
     num_processes = 32
     # chunk_size is how many images per chunk per process - changing this resets progress when restarting.
@@ -157,6 +177,10 @@ if __name__ == "__main__":
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     df.to_csv(output_path, compression='gzip', sep='\t', header=False, index=False)
     print("Saved.")
+    image_paths = glob.glob(os.path.join(data_name, "*.jpg"))
+    for path in image_paths:
+        resize_image(path)
+    print("Resized")
 
     data_name = "data/cc3m/training"
     df = open_tsv("datasets/Train_GCC-training.tsv",data_name, nrows=train_nrows)
@@ -166,3 +190,7 @@ if __name__ == "__main__":
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     df.to_csv(output_path, compression='gzip', sep='\t', header=False, index=False)
     print("Saved.")
+    image_paths = glob.glob(os.path.join(data_name, "*.jpg"))
+    for path in image_paths:
+        resize_image(path)
+    print("Resized")
