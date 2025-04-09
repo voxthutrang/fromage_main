@@ -93,6 +93,16 @@ def download_image(row):
    
     if response.ok:
         try:
+            # content_type = response.headers.get("Content-Type", "")
+            # ext = {
+            #     "image/jpeg": ".jpg",
+            #     "image/png": ".png",
+            #     "image/gif": ".gif",
+            #     "image/webp": ".webp"
+            # }.get(content_type.split(";")[0].strip(), "")
+
+            # fname = fname + ext
+
             with open(fname, 'wb') as out_file:
                 # some sites respond with gzip transport encoding
                 response.raw.decode_content = True
@@ -140,7 +150,7 @@ if __name__ == "__main__":
     val_nrows = int(sys.argv[2]) if len(sys.argv) > 1 else 50
 
     data_name = "data/cc3m/validation"
-    df = open_tsv("datasets/Validation_GCC-1.1.0-Validation.tsv", data_name)
+    df = open_tsv("datasets/Validation_GCC-1.1.0-Validation.tsv", data_name, nrows=val_nrows)
     df_multiprocess(df=df, processes=num_processes, chunk_size=images_per_part, func=download_image, dataset_name=data_name)
     df = df_from_shelve(chunk_size=images_per_part, func=download_image, dataset_name=data_name)
     output_path = "downloaded_%s_report.tsv.gz" % data_name
@@ -149,7 +159,7 @@ if __name__ == "__main__":
     print("Saved.")
 
     data_name = "data/cc3m/training"
-    df = open_tsv("datasets/Train_GCC-training.tsv",data_name)
+    df = open_tsv("datasets/Train_GCC-training.tsv",data_name, nrows=train_nrows)
     df_multiprocess(df=df, processes=num_processes, chunk_size=images_per_part, func=download_image, dataset_name=data_name)
     df = df_from_shelve(chunk_size=images_per_part, func=download_image, dataset_name=data_name)
     output_path = "downloaded_%s_report.tsv.gz" % data_name
