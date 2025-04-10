@@ -60,9 +60,9 @@ class FromageModel(nn.Module):
 
     if self.args.freeze_lm:
       self.lm.eval()
-      print("Freezing the LM.")
-      for param in self.lm.parameters():
-        param.requires_grad = False
+      # print("Freezing the LM.")
+      # for param in self.lm.parameters():
+      #   param.requires_grad = False
     else:
       self.lm.train()
 
