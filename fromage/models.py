@@ -55,12 +55,11 @@ class FromageModel(nn.Module):
       self.lm = OPTForCausalLM.from_pretrained(opt_version)
     else:
       raise NotImplementedError
-
     self.opt_version = opt_version
 
     if self.args.freeze_lm:
       self.lm.eval()
-      # print("Freezing the LM.")
+      print("Freezing the LM.")
       # for param in self.lm.parameters():
       #   param.requires_grad = False
     else:
@@ -72,6 +71,7 @@ class FromageModel(nn.Module):
     print(f'Initializing embedding for the retrieval token [RET] (id = {self.retrieval_token_idx}).')
     self.lm.resize_token_embeddings(len(tokenizer))
 
+    # here
     self.input_embeddings = self.lm.get_input_embeddings()
 
     print("Restoring pretrained weights for the visual model.")
@@ -230,6 +230,7 @@ class FromageModel(nn.Module):
 
       bs, seq_len, embs_dim = input_embs.shape
       if concat_captions:
+        print(batch_size)
         assert len(input_embs.shape) == 3, input_embs
         assert len(full_labels.shape) == 2, full_labels
         assert batch_size % 2 == 0
@@ -658,7 +659,6 @@ def load_fromage(model_dir: str) -> Fromage:
       model_kwargs = json.load(f)
 
   # Initialize tokenizer.
-  print("Loading tokenizer")
   tokenizer = GPT2Tokenizer.from_pretrained(model_kwargs['opt_version'])
   tokenizer.pad_token = tokenizer.eos_token
   # Add special tokens to the model to enable [RET].
@@ -670,14 +670,12 @@ def load_fromage(model_dir: str) -> Fromage:
   args = namedtuple('args', model_kwargs)(**model_kwargs)
 
   # Initialize model for inference.
-  print("Loading model")
   model = Fromage(tokenizer, args, path_array=path_array, emb_matrix=emb_matrix)
   model = model.eval()
   model = model.bfloat16()
   model = model.cuda()
 
   # Load pretrained linear mappings and [RET] embeddings.
-  print("Loading pretrained linear mappings and [RET] embeddings")
   checkpoint = torch.load(model_ckpt_path)
   model.load_state_dict(checkpoint['state_dict'], strict=False)
   with torch.no_grad():
