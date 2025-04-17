@@ -503,6 +503,10 @@ def train(train_loader, model, tokenizer, criterion, optimizer, epoch, scheduler
     if ((i + 1) % args.grad_accumulation_steps == 0) or (i == args.steps_per_epoch - 1):
       # Zero out gradients of the embedding matrix outside of [RET].
       for param in model.module.model.input_embeddings.parameters():
+        if param.grad is None:
+          continue
+        else:
+          print("not continue")
         assert param.grad.shape[0] == len(tokenizer)
         # Keep other embeddings frozen.
         mask = torch.arange(param.grad.shape[0]) != args.retrieval_token_idx

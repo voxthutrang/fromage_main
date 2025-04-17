@@ -60,12 +60,8 @@ class FromageModel(nn.Module):
     if self.args.freeze_lm:
       # self.lm.eval()
       # print("Freezing the LM.")
-      count = 0
       for param in self.lm.model.decoder.embed_tokens.parameters():
         param.requires_grad = False
-        if count == 0:
-          print("Freezing the LM.")
-        else: count += 1
       # for param in self.lm.parameters():
       #   param.requires_grad = False
     else:
