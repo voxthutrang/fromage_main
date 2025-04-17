@@ -344,10 +344,10 @@ def main_worker(gpu, ngpus_per_node, args):
 
   train_loader = torch.utils.data.DataLoader(
     train_dataset, batch_size=args.batch_size, shuffle=(train_sampler is None),
-    num_workers=args.workers, pin_memory=True, sampler=train_sampler)
+    num_workers=args.workers, pin_memory=True, sampler=train_sampler, drop_last=True)
   val_loader = torch.utils.data.DataLoader(
     val_dataset, batch_size=(args.val_batch_size or args.batch_size), shuffle=False,
-    num_workers=args.workers, pin_memory=True, sampler=val_sampler)
+    num_workers=args.workers, pin_memory=True, sampler=val_sampler, drop_last=True)
 
   if args.evaluate:
     evaluate.validate(val_loader, model, tokenizer, criterion, epoch, args)
@@ -502,15 +502,8 @@ def train(train_loader, model, tokenizer, criterion, optimizer, epoch, scheduler
     # Update weights
     if ((i + 1) % args.grad_accumulation_steps == 0) or (i == args.steps_per_epoch - 1):
       # Zero out gradients of the embedding matrix outside of [RET].
-      for param in model.module.model.input_embeddings.parameters():
-        if param.grad is None:
-          continue
-        else:
-          print("not continue")
-        assert param.grad.shape[0] == len(tokenizer)
-        # Keep other embeddings frozen.
-        mask = torch.arange(param.grad.shape[0]) != args.retrieval_token_idx
-        param.grad[mask, :] = 0
+      optimizer.step()
+      optimizer.zero_grad()
 
       # compute gradient and do SGD step
       if args.grad_clip > 0:
@@ -523,6 +516,12 @@ def train(train_loader, model, tokenizer, criterion, optimizer, epoch, scheduler
       frozen_norm = torch.norm(model.module.model.input_embeddings.weight[:-1, :], dim=1).mean(0)
       trainable_weight = model.module.model.input_embeddings.weight[-1, :]
       model.module.model.input_embeddings.weight[-1, :].div_(torch.norm(trainable_weight) / frozen_norm)
+
+      emb_grad = model.module.model.input_embeddings.weight.grad
+      if emb_grad is not None:
+          print("Grad norm of [RET]:", emb_grad[args.retrieval_token_idx].norm())
+          print("Max grad norm of other tokens:", emb_grad[:args.retrieval_token_idx].abs().max(),
+                emb_grad[args.retrieval_token_idx+1:].abs().max())
 
     # measure elapsed time
     batch_time.update(time.time() - end)
