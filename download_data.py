@@ -166,7 +166,7 @@ def df_from_shelve(chunk_size, func, dataset_name, original_df):
 
     return merged_df
 
-def resize_image(image_path, size=(256, 256)):
+def resize_image(image_path, size=(224, 224)):
     try:
         with Image.open(image_path) as img:
             img = img.convert("RGB") 
