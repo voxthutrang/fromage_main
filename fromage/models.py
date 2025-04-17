@@ -58,8 +58,14 @@ class FromageModel(nn.Module):
     self.opt_version = opt_version
 
     if self.args.freeze_lm:
-      self.lm.eval()
-      print("Freezing the LM.")
+      # self.lm.eval()
+      # print("Freezing the LM.")
+      count = 0
+      for param in self.lm.model.decoder.embed_tokens.parameters():
+        param.requires_grad = False
+        if count == 0:
+          print("Freezing the LM.")
+        else: count += 1
       # for param in self.lm.parameters():
       #   param.requires_grad = False
     else:
@@ -230,7 +236,6 @@ class FromageModel(nn.Module):
 
       bs, seq_len, embs_dim = input_embs.shape
       if concat_captions:
-        print(batch_size)
         assert len(input_embs.shape) == 3, input_embs
         assert len(full_labels.shape) == 2, full_labels
         assert batch_size % 2 == 0
