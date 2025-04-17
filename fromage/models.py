@@ -68,8 +68,6 @@ class FromageModel(nn.Module):
     self.retrieval_token_idx = args.retrieval_token_idx
     print(f'Initializing embedding for the retrieval token [RET] (id = {self.retrieval_token_idx}).')
     self.lm.resize_token_embeddings(len(tokenizer))
-    self.input_embeddings.weight.requires_grad = False
-    self.input_embeddings.weight[self.args.retrieval_token_idx].requires_grad = True
 
     # here
     self.input_embeddings = self.lm.get_input_embeddings()
