@@ -55,13 +55,14 @@ class FromageModel(nn.Module):
       self.lm = OPTForCausalLM.from_pretrained(opt_version)
     else:
       raise NotImplementedError
+
     self.opt_version = opt_version
 
     if self.args.freeze_lm:
       self.lm.eval()
       print("Freezing the LM.")
-      # for param in self.lm.parameters():
-      #   param.requires_grad = False
+      for param in self.lm.parameters():
+        param.requires_grad = False
     else:
       self.lm.train()
 
@@ -71,7 +72,6 @@ class FromageModel(nn.Module):
     print(f'Initializing embedding for the retrieval token [RET] (id = {self.retrieval_token_idx}).')
     self.lm.resize_token_embeddings(len(tokenizer))
 
-    # here
     self.input_embeddings = self.lm.get_input_embeddings()
 
     print("Restoring pretrained weights for the visual model.")
@@ -230,7 +230,6 @@ class FromageModel(nn.Module):
 
       bs, seq_len, embs_dim = input_embs.shape
       if concat_captions:
-        print(batch_size)
         assert len(input_embs.shape) == 3, input_embs
         assert len(full_labels.shape) == 2, full_labels
         assert batch_size % 2 == 0
@@ -648,8 +647,6 @@ def load_fromage(model_dir: str) -> Fromage:
   for p in embs_paths:
     with open(p, 'rb') as wf:
         train_embs_data = pkl.load(wf)
-        train_embs_data['embeddings'] = [emb.to(torch.float32) for emb in train_embs_data['embeddings']]
-
         path_array.extend(train_embs_data['paths'])
         emb_matrix.append(train_embs_data['embeddings'])
   emb_matrix = np.concatenate(emb_matrix, axis=0)
