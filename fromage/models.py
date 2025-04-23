@@ -60,6 +60,8 @@ class FromageModel(nn.Module):
     if self.args.freeze_lm:
       self.lm.eval()
       print("Freezing the LM.")
+      # for param in self.lm.parameters():
+      #   param.requires_grad = False
     else:
       self.lm.train()
 
@@ -228,6 +230,7 @@ class FromageModel(nn.Module):
 
       bs, seq_len, embs_dim = input_embs.shape
       if concat_captions:
+        print(batch_size)
         assert len(input_embs.shape) == 3, input_embs
         assert len(full_labels.shape) == 2, full_labels
         assert batch_size % 2 == 0
@@ -644,7 +647,7 @@ def load_fromage(model_dir: str) -> Fromage:
   # These were precomputed for all CC3M images with `model.get_visual_embs(image, mode='retrieval')`.
   for p in embs_paths:
     with open(p, 'rb') as wf:
-        train_embs_data = pkl.load(wf)
+        train_embs_data = torch.load(wf)
         path_array.extend(train_embs_data['paths'])
         emb_matrix.append(train_embs_data['embeddings'])
   emb_matrix = np.concatenate(emb_matrix, axis=0)
@@ -679,10 +682,9 @@ def load_fromage(model_dir: str) -> Fromage:
       model.model.input_embeddings.weight[model.model.retrieval_token_idx, :].copy_(checkpoint['state_dict']['ret_input_embeddings.weight'].squeeze().cpu().detach())
 
   logit_scale = model.model.logit_scale.exp()
-  emb_tensor = torch.tensor(emb_matrix, dtype=torch.float32).to(logit_scale.device)
-  emb_tensor = emb_tensor / emb_tensor.norm(dim=1, keepdim=True)
-  emb_tensor = logit_scale.to(torch.float32) * emb_tensor
-  model.emb_matrix = emb_tensor.to(logit_scale.dtype)
+  emb_matrix = torch.tensor(emb_matrix, dtype=logit_scale.dtype).to(logit_scale.device)
+  emb_matrix = emb_matrix / emb_matrix.norm(dim=1, keepdim=True)
+  emb_matrix = logit_scale * emb_matrix
+  model.emb_matrix = emb_matrix
 
   return model
-
