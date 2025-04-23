@@ -647,7 +647,9 @@ def load_fromage(model_dir: str) -> Fromage:
   # These were precomputed for all CC3M images with `model.get_visual_embs(image, mode='retrieval')`.
   for p in embs_paths:
     with open(p, 'rb') as wf:
-        train_embs_data = torch.load(wf, weights_only=False)
+        train_embs_data = pkl.load(wf)
+        train_embs_data['embeddings'] = [emb.to(torch.float32) for emb in train_embs_data['embeddings']]
+
         path_array.extend(train_embs_data['paths'])
         emb_matrix.append(train_embs_data['embeddings'])
   emb_matrix = np.concatenate(emb_matrix, axis=0)
