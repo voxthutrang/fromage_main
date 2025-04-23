@@ -679,10 +679,10 @@ def load_fromage(model_dir: str) -> Fromage:
       model.model.input_embeddings.weight[model.model.retrieval_token_idx, :].copy_(checkpoint['state_dict']['ret_input_embeddings.weight'].squeeze().cpu().detach())
 
   logit_scale = model.model.logit_scale.exp()
-  emb_matrix = torch.tensor(emb_matrix, dtype=logit_scale.dtype).to(logit_scale.device)
-  emb_matrix = emb_matrix / emb_matrix.norm(dim=1, keepdim=True)
-  emb_matrix = logit_scale * emb_matrix
-  model.emb_matrix = emb_matrix
+  emb_tensor = torch.tensor(emb_matrix, dtype=torch.float32).to(logit_scale.device)
+  emb_tensor = emb_tensor / emb_tensor.norm(dim=1, keepdim=True)
+  emb_tensor = logit_scale.to(torch.float32) * emb_tensor
+  model.emb_matrix = emb_tensor.to(logit_scale.dtype)
 
   return model
 
