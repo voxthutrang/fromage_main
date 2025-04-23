@@ -121,7 +121,7 @@ def download_image(row):
 def open_tsv(fname, folder, nrows):
     print(f"Opening {fname} Data File (only first {nrows} rows)...")
     os.makedirs(folder, exist_ok=True)
-    if nrows != 'None':
+    if nrows is not None:
         df = pd.read_csv(fname, sep='\t', names=["caption", "url"], nrows=nrows)
     else:
         df = pd.read_csv(fname, sep='\t', names=["caption", "url"])
