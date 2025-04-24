@@ -25,14 +25,14 @@ import torch.utils.data.distributed
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 from torch.utils.tensorboard import SummaryWriter
-import torchvision
+import torchvisionf
 
 from fromage import data
 from fromage import losses as losses_utils
 from fromage import models
 from fromage import utils
 from fromage import evaluate
-from transformers import AutoTokenizer
+from transformers import AutoModelForCausalLM, AutoTokenizer
 
 # Disable HuggingFace tokenizer parallelism.
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
@@ -232,7 +232,8 @@ def main_worker(gpu, ngpus_per_node, args):
   model_args.shared_emb_dim = args.shared_emb_dim
   model_args.text_emb_layers = args.text_emb_layers
 
-  tokenizer = AutoTokenizer.from_pretrained(args.opt_version, use_fast=False)
+  model_name = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
+  tokenizer = AutoTokenizer.from_pretrained(model_name)
   # Add an image token for loss masking (and visualization) purposes.
   tokenizer.add_special_tokens({"cls_token": "<|image|>"})  # add special image token to tokenizer
   print('Adding [RET] token to vocabulary.')

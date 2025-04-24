@@ -15,7 +15,7 @@ import pickle as pkl
 from PIL import Image, UnidentifiedImageError
 
 from transformers import AutoConfig, AutoModel, AutoModelForCausalLM
-from transformers import OPTForCausalLM, GPT2Tokenizer
+from transformers import AutoModelForCausalLM, GPT2Tokenizer
 from transformers import CLIPVisionModel, CLIPVisionConfig
 
 from fromage import utils
@@ -51,8 +51,12 @@ class FromageModel(nn.Module):
 
     self.logit_scale = nn.Parameter(torch.ones([]) * np.log(1 / 0.07))
 
-    if 'facebook/opt' in opt_version:
-      self.lm = OPTForCausalLM.from_pretrained(opt_version)
+    if 'TinyLlama' in opt_version:
+      self.lm = AutoModelForCausalLM.from_pretrained(
+          opt_version,
+          torch_dtype=torch.float16, 
+          device_map="auto"
+      )
     else:
       raise NotImplementedError
 
