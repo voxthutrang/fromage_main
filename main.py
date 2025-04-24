@@ -40,7 +40,7 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 # Available LLM models.
 llm_models = ['facebook/opt-125m', 'facebook/opt-350m', 'facebook/opt-1.3b',
               'facebook/opt-2.7b', 'facebook/opt-6.7b', 'facebook/opt-13b', 'facebook/opt-30b',
-              'facebook/opt-66b']
+              'facebook/opt-66b', 'TinyLlama/TinyLlama-1.1B-Chat-v1.0']
 datasets = ['cc3m']
 best_score = 0  # Variable to keep track of best model so far.
 
