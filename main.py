@@ -25,7 +25,7 @@ import torch.utils.data.distributed
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 from torch.utils.tensorboard import SummaryWriter
-import torchvisionf
+import torchvision
 
 from fromage import data
 from fromage import losses as losses_utils
